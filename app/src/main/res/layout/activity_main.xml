@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#101014">
+
+    <!-- GAME AREA -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <com.firefinix.freestyle2048game.GameView
+            android:id="@+id/gameView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+    </FrameLayout>
+
+    <!-- PREMIUM BUTTON BAR WITH CLEAR SEPARATION -->
+    <LinearLayout
+        android:id="@+id/buttonBar"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="16dp"
+        android:background="@drawable/bg_button_bar"
+        android:weightSum="3">
+
+        <ImageButton
+            android:id="@+id/btnHammer"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_premium_button"
+            android:src="@drawable/ic_hammer"
+            android:scaleType="centerInside"
+            android:tint="@android:color/white"/>
+
+        <ImageButton
+            android:id="@+id/btnUndo"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_premium_button"
+            android:src="@drawable/ic_undo"
+            android:scaleType="centerInside"
+            android:tint="@android:color/white"/>
+
+        <ImageButton
+            android:id="@+id/btnPause"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_premium_button"
+            android:src="@drawable/ic_pause_button"
+            android:scaleType="centerInside"
+            android:tint="@android:color/white"/>
+
+    </LinearLayout>
+
+</LinearLayout>

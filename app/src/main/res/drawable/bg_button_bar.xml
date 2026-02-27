@@ -1,0 +1,18 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Base Dark Background -->
+    <item>
+        <shape>
+            <solid android:color="#14141B"/>
+        </shape>
+    </item>
+
+    <!-- Top Divider Line -->
+    <item android:gravity="top">
+        <shape>
+            <size android:height="1dp"/>
+            <solid android:color="#2C2C38"/>
+        </shape>
+    </item>
+
+</layer-list>

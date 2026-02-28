@@ -1,96 +1,168 @@
 package com.firefinix.freestyle2048game
 
 import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
+import kotlin.math.*
 import kotlin.random.Random
+import java.util.ArrayList
+import java.util.ArrayDeque
+import java.util.Collections
 
 class GameManager(
     private val screenWidth: Int,
     private val screenHeight: Int
 ) {
 
-    private val COLS = 5
-    private val ROWS = 8
+    val COLS = 5
+    val ROWS = 8
 
-    private val tileSize = screenWidth / COLS.toFloat()
+    val tileSize = screenWidth / COLS.toFloat()
+    val gridSize = tileSize * COLS
+    val gridHeight = tileSize * ROWS
 
-    private val paint = Paint()
+    val gridLeft = (screenWidth - gridSize) / 2f
 
-    private var paused = false
+    private val topSafeArea = screenHeight * 0.12f
+    private val buttonBarHeight = screenHeight * 0.12f
+    private val adsBarHeight = screenHeight * 0.10f
+
+    private val bottomReserved = buttonBarHeight + adsBarHeight
+    private val usableHeight = screenHeight - topSafeArea - bottomReserved
+
+    private val verticalBias = 0.18f
+    val gridTop =
+        topSafeArea + ((usableHeight - gridHeight).coerceAtLeast(0f)) * verticalBias
+
+    val grid = Array(ROWS) { arrayOfNulls<Tile>(COLS) }
+
+    // 🔥 THREAD SAFE LIST
+    private val tiles = Collections.synchronizedList(ArrayList<Tile>())
+
+    private val mergeQueue = ArrayDeque<MergeOperation>()
+    private var mergeInProgress = false
 
     private var score: Long = 0
     private var gems: Long = 0
     private var crowns: Long = 0
 
-    private val grid = Array(ROWS) { IntArray(COLS) }
+    fun getScore() = score
+    fun getGems() = gems
+    fun getCrowns() = crowns
 
-    init {
-        spawnRandomTile()
+    private var spawnColumn = COLS / 2
+    private var spawnVisualColumn = spawnColumn.toFloat()
+    private val spawnFollowSpeed = 12f
+    private var nextTileValue = generateTileValue()
+    private var spawnLocked = false
+    private var spawnerTouchActive = false
+
+    fun getSpawnVisualColumn() = spawnVisualColumn
+    fun getNextTileValue() = nextTileValue
+    fun isSpawnerTouchActive() = spawnerTouchActive
+
+    fun setSpawnerTouchActive(active: Boolean) {
+        spawnerTouchActive = active
     }
 
-    // ================= UPDATE =================
+    fun setSpawnColumn(col: Int) {
+        if (!spawnLocked)
+            spawnColumn = col.coerceIn(0, COLS - 1)
+    }
+
+    private class MergeOperation(
+        val anchor: Tile,
+        val sources: ArrayList<Tile>,
+        val finalValue: Int
+    )
+
+    // ============================================================
+    // UPDATE
+    // ============================================================
 
     fun update(dt: Float) {
-        if (paused) return
-    }
 
-    // ================= RENDER =================
+        updateSpawner(dt)
 
-    fun render(canvas: Canvas) {
+        var allSettled = true
 
-        canvas.drawColor(Color.parseColor("#101014"))
+        // Safe snapshot iteration
+        val snapshot = ArrayList(tiles)
 
-        for (row in 0 until ROWS) {
-            for (col in 0 until COLS) {
-
-                val value = grid[row][col]
-
-                val x = col * tileSize
-                val y = row * tileSize
-
-                paint.color = if (value == 0)
-                    Color.DKGRAY
-                else
-                    Color.parseColor("#FF6FAE")
-
-                canvas.drawRect(
-                    x,
-                    y,
-                    x + tileSize,
-                    y + tileSize,
-                    paint
-                )
+        for (tile in snapshot) {
+            tile.update(dt)
+            if (!tile.isSettled()) {
+                allSettled = false
             }
+        }
+
+        if (allSettled && !mergeInProgress) {
+            spawnLocked = false
         }
     }
 
-    private fun spawnRandomTile() {
-        val r = Random.nextInt(ROWS)
-        val c = Random.nextInt(COLS)
-        grid[r][c] = 2
-        score += 2
+    // ============================================================
+    // RENDER
+    // ============================================================
+
+    fun render(canvas: Canvas) {
+
+        // 🔥 SAFE SNAPSHOT FOR RENDER
+        val snapshot = ArrayList(tiles)
+
+        for (tile in snapshot) {
+            tile.draw(canvas)
+        }
     }
 
-    // ================= GETTERS (FIX FOR GameController) =================
+    // ============================================================
+    // SPAWN TILE
+    // ============================================================
 
-    fun getScore(): Long {
-        return score
+    fun spawnTile() {
+
+        if (spawnLocked || mergeInProgress) return
+
+        val row = calculateLandingRow(spawnColumn)
+        if (row == -1) return
+
+        val x = gridLeft + spawnColumn * tileSize
+        val startY = gridTop - tileSize
+        val targetY = gridTop + row * tileSize
+
+        val tile = Tile(
+            spawnColumn,
+            row,
+            nextTileValue,
+            tileSize,
+            x,
+            startY,
+            targetY
+        )
+
+        synchronized(tiles) {
+            tiles.add(tile)
+        }
+
+        grid[row][spawnColumn] = tile
+
+        nextTileValue = generateTileValue()
+        spawnLocked = true
     }
 
-    fun getGems(): Long {
-        return gems
+    private fun calculateLandingRow(col: Int): Int {
+        for (r in ROWS - 1 downTo 0) {
+            if (grid[r][col] == null) {
+                return r
+            }
+        }
+        return -1
     }
 
-    fun getCrowns(): Long {
-        return crowns
+    private fun updateSpawner(dt: Float) {
+        val delta = spawnColumn - spawnVisualColumn
+        spawnVisualColumn += delta * spawnFollowSpeed * dt
     }
 
-    // ================= BUTTON ACTIONS =================
-
-    fun onHammer() {}
-    fun onUndo() {}
-    fun togglePause() {
-        paused = !paused
+    private fun generateTileValue(): Int {
+        return if (Random.nextFloat() < 0.85f) 2 else 4
     }
 }

@@ -15,11 +15,10 @@ class GameView @JvmOverloads constructor(
 
     private var gameManager: GameManager? = null
     private var gameThread: Thread? = null
-
-    @Volatile
-    private var running = false
-
+    @Volatile private var running = false
     private var lastTime = 0L
+
+    private val bottomFadePaint = Paint(Paint.ANTI_ALIAS_FLAG)
 
     init {
         holder.addCallback(this)
@@ -27,43 +26,30 @@ class GameView @JvmOverloads constructor(
         setLayerType(LAYER_TYPE_SOFTWARE, null)
     }
 
-    // ============================================================
-    // SURFACE CALLBACKS
-    // ============================================================
-
     override fun surfaceCreated(holder: SurfaceHolder) {
         if (width == 0 || height == 0) return
         gameManager = GameManager(width, height)
         startLoop()
     }
 
-    override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {}
-
     override fun surfaceDestroyed(holder: SurfaceHolder) {
         stopLoop()
     }
 
-    // ============================================================
-    // GAME LOOP
-    // ============================================================
+    override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {}
 
     private fun startLoop() {
         if (running) return
-
         running = true
         lastTime = System.nanoTime()
 
         gameThread = thread(start = true) {
             while (running) {
-
                 val now = System.nanoTime()
                 val dt = (now - lastTime) / 1_000_000_000f
                 lastTime = now
-
-                synchronized(this) {
-                    update(dt)
-                    render()
-                }
+                update(dt)
+                render()
             }
         }
     }
@@ -79,111 +65,75 @@ class GameView @JvmOverloads constructor(
     }
 
     private fun render() {
-
         val canvas = holder.lockCanvas() ?: return
-
         try {
-            drawPremiumBackground(canvas)
-            gameManager?.render(canvas)
+            drawBackground(canvas)
+
+            val gm = gameManager ?: return
+
+            canvas.save()
+
+            canvas.clipRect(
+                gm.gridLeft,
+                gm.gridTop,
+                gm.gridLeft + gm.gridSize,
+                gm.gridTop + gm.gridHeight
+            )
+
+            gm.render(canvas)
+
+            drawBottomFade(canvas, gm)
+
+            canvas.restore()
+
         } finally {
             holder.unlockCanvasAndPost(canvas)
         }
     }
 
-    // ============================================================
-    // BACKGROUND (Soft Matte Grid)
-    // ============================================================
-
-    private fun drawPremiumBackground(canvas: Canvas) {
-
-        val w = width.toFloat()
-        val h = height.toFloat()
-
-        // Base dark
+    // 🔥 Clean Background (No Vertical Lines)
+    private fun drawBackground(canvas: Canvas) {
         canvas.drawColor(Color.parseColor("#0B0B14"))
+    }
 
-        val gm = gameManager ?: return
+    // Optional Bottom Fade (keep or remove)
+    private fun drawBottomFade(canvas: Canvas, gm: GameManager) {
 
-        val columnWidth = gm.gridSize / gm.COLS
-        val gridTop = gm.gridTop
-        val gridBottom = gm.gridTop + gm.ROWS * gm.tileSize
+        val fadeHeight = gm.tileSize * 2.5f
 
-        canvas.save()
-
-        canvas.clipRect(
-            gm.gridLeft,
-            gridTop,
-            gm.gridLeft + gm.gridSize,
-            gridBottom
-        )
-
-        for (i in 0 until gm.COLS) {
-
-            val left = gm.gridLeft + i * columnWidth
-            val right = left + columnWidth
-
-            val baseColor = if (i % 2 == 0)
-                "#14141C"   // darker
-            else
-                "#23232B"   // slightly lighter
-
-            val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-            paint.color = Color.parseColor(baseColor)
-            paint.alpha = 140   // important increase
-
-            canvas.drawRect(
-                left,
-                gridTop,
-                right,
-                gridBottom,
-                paint
-            )
-        }
-
-        canvas.restore()
-
-        // Soft vignette
-        val vignette = RadialGradient(
-            w / 2f,
-            h / 2f,
-            h,
-            intArrayOf(
-                Color.TRANSPARENT,
-                Color.parseColor("#AA000000")
-            ),
-            floatArrayOf(0.7f, 1f),
+        val bottomFade = LinearGradient(
+            0f,
+            gm.gridBottom - fadeHeight,
+            0f,
+            gm.gridBottom,
+            Color.TRANSPARENT,
+            Color.parseColor("#22000000"),
             Shader.TileMode.CLAMP
         )
 
-        val vignettePaint = Paint(Paint.ANTI_ALIAS_FLAG)
-        vignettePaint.shader = vignette
+        bottomFadePaint.shader = bottomFade
 
-        canvas.drawRect(0f, 0f, w, h, vignettePaint)
+        canvas.drawRect(
+            gm.gridLeft,
+            gm.gridBottom - fadeHeight,
+            gm.gridLeft + gm.gridSize,
+            gm.gridBottom,
+            bottomFadePaint
+        )
     }
 
-    // ============================================================
-    // TOUCH
-    // ============================================================
-
     override fun onTouchEvent(event: MotionEvent): Boolean {
-
         val gm = gameManager ?: return true
 
         when (event.action) {
-
             MotionEvent.ACTION_DOWN,
             MotionEvent.ACTION_MOVE -> {
-                val col = ((event.x - gm.gridLeft) / gm.tileSize).toInt()
+                val rawCol = ((event.x - gm.gridLeft) / gm.tileSize).toInt()
+                val col = rawCol.coerceIn(0, gm.COLS - 1)
                 gm.setSpawnColumn(col)
-                gm.setSpawnerTouchActive(true)
             }
-
-            MotionEvent.ACTION_UP -> {
-                gm.spawnTile()
-                gm.setSpawnerTouchActive(false)
-            }
+            MotionEvent.ACTION_UP -> gm.spawnTile()
         }
-
         return true
     }
 

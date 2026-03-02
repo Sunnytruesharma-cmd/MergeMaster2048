@@ -1,168 +1,145 @@
 package com.firefinix.freestyle2048game
 
-import android.graphics.Canvas
+import android.graphics.*
+import kotlin.math.min
 import kotlin.random.Random
-import java.util.ArrayList
 
 class GameManager(
     private val screenWidth: Int,
     private val screenHeight: Int
 ) {
 
-    // =============================
-    // GRID CONFIG
-    // =============================
-
     val COLS = 5
     val ROWS = 8
 
-    // =============================
-// UI RESERVED AREAS
-// =============================
-
-    // Top HUD for score, crown, next tile
-    private val topHudHeight = screenHeight * 0.16f
-
-    // Bottom buttons + ads
-    private val buttonBarHeight = screenHeight * 0.12f
-    private val adsBarHeight = screenHeight * 0.10f
-    private val bottomReserved = buttonBarHeight + adsBarHeight
-
-    // Usable space for grid only
-    private val usableHeight =
-        screenHeight - topHudHeight - bottomReserved
-
-    // =============================
-    // GRID SIZE CONTROL
-    // =============================
-
-    private val gridWidthRatio = 0.90f
-    private val effectiveGridWidth =
-        screenWidth * gridWidthRatio
-
-    private val tileGapRatio = 0.10f
-    private val totalGapWidth =
-        effectiveGridWidth * tileGapRatio
-
-    val tileGap: Float =
-        totalGapWidth / (COLS - 1)
-
-    val tileSize: Float =
-        (effectiveGridWidth - totalGapWidth) / COLS
-
-    val gridSize: Float =
-        effectiveGridWidth
-
-    val gridHeight: Float =
-        tileSize * ROWS + tileGap * (ROWS - 1)
-
-    val gridLeft: Float =
-        (screenWidth - gridSize) / 2f
-
-    private val downwardOffset = screenHeight * 0.05f
-
-    val gridTop: Float =
-        topHudHeight +
-                (usableHeight - gridHeight) / 2f
-
+    val gridSize: Float
+    val tileSize: Float
+    val gridLeft: Float
+    val gridTop: Float
     val gridBottom: Float
-        get() = gridTop + gridHeight
 
-    // =============================
-    // GRID STORAGE
-    // =============================
+    private val tiles = Array(ROWS) { IntArray(COLS) }
 
-    val grid = Array(ROWS) { arrayOfNulls<Tile>(COLS) }
-    private val tiles = ArrayList<Tile>()
+    private var spawnColumn = 0
+    private var fallingRow = -1
+    private var fallingY = 0f
+    private var fallingValue = 2
 
-    // =============================
-    // SCORE / ECONOMY (RESTORED)
-    // =============================
-
-    private var score: Long = 0
-    private var gems: Long = 0
-    private var crowns: Long = 0
-
-    fun getScore(): Long = score
-    fun getGems(): Long = gems
-    fun getCrowns(): Long = crowns
-
-    // =============================
-    // SPAWN SYSTEM (UNCHANGED)
-    // =============================
-
-    private var spawnColumn = COLS / 2
-    private var nextTileValue = generateTileValue()
-
-    fun setSpawnColumn(col: Int) {
-        spawnColumn = col.coerceIn(0, COLS - 1)
+    private val tilePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.BLACK
+        textAlign = Paint.Align.CENTER
+        textSize = 42f
     }
 
-    fun getNextTileValue(): Int = nextTileValue
+    init {
+        gridSize = screenWidth * 0.9f
+        tileSize = gridSize / COLS
 
-    // =============================
-    // UPDATE / RENDER
-    // =============================
+        gridLeft = (screenWidth - gridSize) / 2f
+        gridTop = 40f
+        gridBottom = gridTop + tileSize * ROWS
+    }
 
     fun update(dt: Float) {
-        val snapshot = ArrayList(tiles)
-        for (tile in snapshot) {
-            tile.update(dt)
+
+        if (fallingRow >= 0) {
+            fallingY += 900f * dt
+
+            val targetY = gridTop + fallingRow * tileSize
+
+            if (fallingY >= targetY) {
+                tiles[fallingRow][spawnColumn] = fallingValue
+                fallingRow = -1
+            }
         }
     }
 
     fun render(canvas: Canvas) {
-        val snapshot = ArrayList(tiles)
-        for (tile in snapshot) {
-            tile.draw(canvas)
+
+        for (r in 0 until ROWS) {
+            for (c in 0 until COLS) {
+
+                val left = gridLeft + c * tileSize
+                val top = gridTop + r * tileSize
+                val right = left + tileSize
+                val bottom = top + tileSize
+
+                tilePaint.color = Color.parseColor("#E15BB5")
+                canvas.drawRoundRect(
+                    RectF(left, top, right, bottom),
+                    30f,
+                    30f,
+                    tilePaint
+                )
+
+                val value = tiles[r][c]
+                if (value != 0) {
+                    canvas.drawText(
+                        value.toString(),
+                        left + tileSize / 2,
+                        top + tileSize / 2 + 15,
+                        textPaint
+                    )
+                }
+            }
+        }
+
+        if (fallingRow >= 0) {
+
+            val left = gridLeft + spawnColumn * tileSize
+            val right = left + tileSize
+            val bottom = fallingY + tileSize
+
+            tilePaint.color = Color.parseColor("#8E5BE8")
+
+            canvas.drawRoundRect(
+                RectF(left, fallingY, right, bottom),
+                30f,
+                30f,
+                tilePaint
+            )
+
+            canvas.drawText(
+                fallingValue.toString(),
+                left + tileSize / 2,
+                fallingY + tileSize / 2 + 15,
+                textPaint
+            )
         }
     }
 
-    // =============================
-    // SPAWN TILE
-    // =============================
+    fun setSpawnColumn(col: Int) {
+        spawnColumn = col
+    }
 
     fun spawnTile() {
 
-        val row = calculateLandingRow(spawnColumn)
-        if (row == -1) return
+        if (fallingRow >= 0) return
 
-        val x =
-            gridLeft +
-                    spawnColumn * (tileSize + tileGap)
-
-        val startY = gridTop - tileSize
-
-        val targetY =
-            gridTop +
-                    row * (tileSize + tileGap)
-
-        val tile = Tile(
-            spawnColumn,
-            row,
-            nextTileValue,
-            tileSize,
-            x,
-            startY,
-            targetY
-        )
-
-        tiles.add(tile)
-        grid[row][spawnColumn] = tile
-
-        nextTileValue = generateTileValue()
-    }
-
-    private fun calculateLandingRow(col: Int): Int {
         for (r in ROWS - 1 downTo 0) {
-            if (grid[r][col] == null) {
-                return r
+            if (tiles[r][spawnColumn] == 0) {
+                fallingRow = r
+                fallingY = gridTop - tileSize
+                fallingValue = if (Random.nextBoolean()) 2 else 4
+                break
             }
         }
-        return -1
     }
 
-    private fun generateTileValue(): Int {
-        return if (Random.nextFloat() < 0.85f) 2 else 4
+    fun resetGame() {
+        for (r in 0 until ROWS) {
+            for (c in 0 until COLS) {
+                tiles[r][c] = 0
+            }
+        }
+    }
+
+    fun useHammer() {
+        // future logic
+    }
+
+    fun useShuffle() {
+        // future logic
     }
 }

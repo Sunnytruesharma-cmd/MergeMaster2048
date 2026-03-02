@@ -1,17 +1,20 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Base Dark Background -->
+    <!-- Base -->
     <item>
         <shape>
-            <solid android:color="#14141B"/>
+            <gradient
+                android:startColor="#12121A"
+                android:endColor="#0E0E15"
+                android:angle="270"/>
         </shape>
     </item>
 
-    <!-- Top Divider Line -->
+    <!-- Softer Divider -->
     <item android:gravity="top">
         <shape>
             <size android:height="1dp"/>
-            <solid android:color="#2C2C38"/>
+            <solid android:color="#252534"/>
         </shape>
     </item>
 

@@ -13,12 +13,12 @@ class GameView @JvmOverloads constructor(
     attrs: AttributeSet? = null
 ) : SurfaceView(context, attrs), SurfaceHolder.Callback {
 
-    private var gameManager: GameManager? = null
+    lateinit var gameManager: GameManager
+        private set
+
     private var gameThread: Thread? = null
     @Volatile private var running = false
     private var lastTime = 0L
-
-    private val bottomFadePaint = Paint(Paint.ANTI_ALIAS_FLAG)
 
     init {
         holder.addCallback(this)
@@ -27,7 +27,6 @@ class GameView @JvmOverloads constructor(
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
-        if (width == 0 || height == 0) return
         gameManager = GameManager(width, height)
         startLoop()
     }
@@ -36,7 +35,12 @@ class GameView @JvmOverloads constructor(
         stopLoop()
     }
 
-    override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {}
+    override fun surfaceChanged(
+        holder: SurfaceHolder,
+        format: Int,
+        width: Int,
+        height: Int
+    ) {}
 
     private fun startLoop() {
         if (running) return
@@ -61,79 +65,36 @@ class GameView @JvmOverloads constructor(
     }
 
     private fun update(dt: Float) {
-        gameManager?.update(dt)
+        gameManager.update(dt)
     }
 
     private fun render() {
         val canvas = holder.lockCanvas() ?: return
         try {
-            drawBackground(canvas)
-
-            val gm = gameManager ?: return
-
-            canvas.save()
-
-            canvas.clipRect(
-                gm.gridLeft,
-                gm.gridTop,
-                gm.gridLeft + gm.gridSize,
-                gm.gridTop + gm.gridHeight
-            )
-
-            gm.render(canvas)
-
-            drawBottomFade(canvas, gm)
-
-            canvas.restore()
-
+            canvas.drawColor(Color.parseColor("#0B0B14"))
+            gameManager.render(canvas)
         } finally {
             holder.unlockCanvasAndPost(canvas)
         }
     }
 
-    // 🔥 Clean Background (No Vertical Lines)
-    private fun drawBackground(canvas: Canvas) {
-        canvas.drawColor(Color.parseColor("#0B0B14"))
-    }
-
-    // Optional Bottom Fade (keep or remove)
-    private fun drawBottomFade(canvas: Canvas, gm: GameManager) {
-
-        val fadeHeight = gm.tileSize * 2.5f
-
-        val bottomFade = LinearGradient(
-            0f,
-            gm.gridBottom - fadeHeight,
-            0f,
-            gm.gridBottom,
-            Color.TRANSPARENT,
-            Color.parseColor("#22000000"),
-            Shader.TileMode.CLAMP
-        )
-
-        bottomFadePaint.shader = bottomFade
-
-        canvas.drawRect(
-            gm.gridLeft,
-            gm.gridBottom - fadeHeight,
-            gm.gridLeft + gm.gridSize,
-            gm.gridBottom,
-            bottomFadePaint
-        )
-    }
-
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        val gm = gameManager ?: return true
 
         when (event.action) {
             MotionEvent.ACTION_DOWN,
             MotionEvent.ACTION_MOVE -> {
-                val rawCol = ((event.x - gm.gridLeft) / gm.tileSize).toInt()
-                val col = rawCol.coerceIn(0, gm.COLS - 1)
-                gm.setSpawnColumn(col)
+                val col = ((event.x - gameManager.gridLeft) /
+                        gameManager.tileSize).toInt()
+                    .coerceIn(0, gameManager.COLS - 1)
+
+                gameManager.setSpawnColumn(col)
             }
-            MotionEvent.ACTION_UP -> gm.spawnTile()
+
+            MotionEvent.ACTION_UP -> {
+                gameManager.spawnTile()
+            }
         }
+
         return true
     }
 

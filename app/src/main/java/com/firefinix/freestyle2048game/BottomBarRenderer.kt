@@ -15,7 +15,7 @@ class BottomBarRenderer(private val context: Context) {
     private val swapBitmap: Bitmap =
         BitmapFactory.decodeResource(
             context.resources,
-            R.drawable.ic_swap_tiles
+            R.drawable.ic_swipe_tiles
         )
 
     // Future buttons

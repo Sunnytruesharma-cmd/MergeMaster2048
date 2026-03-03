@@ -25,6 +25,26 @@ class GameManager(
     private var fallingY = 0f
     private var fallingValue = 2
 
+    // ================= FUTURE TILE SYSTEM =================
+
+    private var nextTileValue: Int = generateRandomTile()
+
+    fun getNextTileValue(): Int {
+        return nextTileValue
+    }
+
+    private fun consumeNextTile(): Int {
+        val value = nextTileValue
+        nextTileValue = generateRandomTile()
+        return value
+    }
+
+    private fun generateRandomTile(): Int {
+        return if (Random.nextBoolean()) 2 else 4
+    }
+
+    // ======================================================
+
     private val tilePaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.BLACK
@@ -121,7 +141,10 @@ class GameManager(
             if (tiles[r][spawnColumn] == 0) {
                 fallingRow = r
                 fallingY = gridTop - tileSize
-                fallingValue = if (Random.nextBoolean()) 2 else 4
+
+                // 🔥 USE FUTURE TILE VALUE HERE
+                fallingValue = consumeNextTile()
+
                 break
             }
         }
@@ -133,6 +156,9 @@ class GameManager(
                 tiles[r][c] = 0
             }
         }
+
+        // Reset preview as well
+        nextTileValue = generateRandomTile()
     }
 
     fun useHammer() {

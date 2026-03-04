@@ -3,7 +3,6 @@ package com.firefinix.freestyle2048game
 import android.os.Build
 import android.os.Bundle
 import android.view.View
-import android.view.ViewTreeObserver
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.widget.FrameLayout
@@ -13,12 +12,13 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
+import kotlin.random.Random
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var gameView: GameView
-    private lateinit var futureTileManager: FutureTileManager
     private lateinit var futureText: TextView
+    private lateinit var futureTileManager: FutureTileManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,17 +29,18 @@ class MainActivity : AppCompatActivity() {
 
         enableImmersiveMode()
 
-        // SAFE PREVIEW INIT AFTER LAYOUT
-        gameView.viewTreeObserver.addOnGlobalLayoutListener(
-            object : ViewTreeObserver.OnGlobalLayoutListener {
-                override fun onGlobalLayout() {
-                    gameView.viewTreeObserver.removeOnGlobalLayoutListener(this)
-                    renderFutureTile()
-                }
-            }
-        )
+        // ================= FUTURE TILE SYSTEM =================
 
-        // ================= BOTTOM BUTTONS =================
+        futureTileManager = FutureTileManager(this)
+
+        if (!futureTileManager.isFreeActive()) {
+            futureTileManager.startFreeTimer(20 * 60 * 1000)
+        }
+
+        // simple preview tile (temporary)
+        updateFuturePreview(Random.nextInt(0,2).let { if(it==0) 2 else 4 })
+
+        // ================= BUTTONS =================
 
         findViewById<View>(R.id.btnHammer).setOnClickListener {
             gameView.gameManager.useHammer()
@@ -51,18 +52,18 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<View>(R.id.btnReset).setOnClickListener {
             gameView.gameManager.resetGame()
-            renderFutureTile()
+            updateFuturePreview(Random.nextInt(0,2).let { if(it==0) 2 else 4 })
         }
 
-        // ================= FUTURE TILE TIMER =================
-
-        futureTileManager = FutureTileManager(this)
-
-        if (!futureTileManager.isFreeActive()) {
-            futureTileManager.startFreeTimer(20 * 60 * 1000)
+        findViewById<View>(R.id.btnReward).setOnClickListener {
+            // Reward ad logic later
         }
 
-        // ================= BANNER AD ==========================
+        findViewById<View>(R.id.btnCombo).setOnClickListener {
+            // Combo logic later
+        }
+
+        // ================= ADS =================
 
         MobileAds.initialize(this)
 
@@ -78,9 +79,9 @@ class MainActivity : AppCompatActivity() {
         adView.loadAd(adRequest)
     }
 
-    // ================= FUTURE TILE ===========================
+    // ================= PREVIEW UPDATE =================
 
-    private fun renderFutureTile() {
+    private fun updateFuturePreview(value: Int) {
 
         if (!futureTileManager.isFreeActive()) {
             futureText.text = "?"
@@ -88,16 +89,11 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        try {
-            val value = gameView.gameManager.getNextTileValue()
-            futureText.text = value.toString()
-            futureText.alpha = 1f
-        } catch (e: Exception) {
-            // gameManager not ready yet, ignore safely
-        }
+        futureText.text = value.toString()
+        futureText.alpha = 1f
     }
 
-    // ================= IMMERSIVE MODE ========================
+    // ================= IMMERSIVE MODE =================
 
     private fun enableImmersiveMode() {
 
@@ -126,11 +122,6 @@ class MainActivity : AppCompatActivity() {
                         or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                         or View.SYSTEM_UI_FLAG_LAYOUT_STABLE)
         }
-    }
-
-    override fun onWindowFocusChanged(hasFocus: Boolean) {
-        super.onWindowFocusChanged(hasFocus)
-        if (hasFocus) enableImmersiveMode()
     }
 
     override fun onResume() {

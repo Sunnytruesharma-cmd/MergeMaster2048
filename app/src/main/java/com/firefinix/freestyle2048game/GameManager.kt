@@ -1,7 +1,6 @@
 package com.firefinix.freestyle2048game
 
 import android.graphics.*
-import kotlin.math.min
 import kotlin.random.Random
 
 class GameManager(
@@ -25,34 +24,28 @@ class GameManager(
     private var fallingY = 0f
     private var fallingValue = 2
 
-    // ================= FUTURE TILE SYSTEM =================
-
-    private var nextTileValue: Int = generateRandomTile()
-
-    fun getNextTileValue(): Int {
-        return nextTileValue
-    }
-
-    private fun consumeNextTile(): Int {
-        val value = nextTileValue
-        nextTileValue = generateRandomTile()
-        return value
-    }
-
-    private fun generateRandomTile(): Int {
-        return if (Random.nextBoolean()) 2 else 4
-    }
-
-    // ======================================================
-
     private val tilePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.BLACK
         textAlign = Paint.Align.CENTER
         textSize = 42f
     }
 
+    // Lane background paint
+    private val lanePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#17171F")
+        style = Paint.Style.FILL
+    }
+
+    // Divider paint
+    private val dividerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#2F2F3A")
+        strokeWidth = 8f
+    }
+
     init {
+
         gridSize = screenWidth * 0.9f
         tileSize = gridSize / COLS
 
@@ -64,11 +57,13 @@ class GameManager(
     fun update(dt: Float) {
 
         if (fallingRow >= 0) {
+
             fallingY += 900f * dt
 
             val targetY = gridTop + fallingRow * tileSize
 
             if (fallingY >= targetY) {
+
                 tiles[fallingRow][spawnColumn] = fallingValue
                 fallingRow = -1
             }
@@ -77,27 +72,53 @@ class GameManager(
 
     fun render(canvas: Canvas) {
 
+        val laneSpacing = tileSize * 0.03f
+        val laneWidth = tileSize - laneSpacing * 2
+
+        // ===== DRAW LANES =====
+        for (c in 0 until COLS) {
+
+            val laneLeft = gridLeft + c * tileSize + laneSpacing
+            val laneRight = laneLeft + laneWidth
+
+            canvas.drawRoundRect(
+                RectF(
+                    laneLeft,
+                    gridTop,
+                    laneRight,
+                    gridBottom
+                ),
+                0f,
+                0f,
+                lanePaint
+            )
+        }
+
+        // ===== DRAW TILES =====
         for (r in 0 until ROWS) {
             for (c in 0 until COLS) {
 
-                val left = gridLeft + c * tileSize
-                val top = gridTop + r * tileSize
-                val right = left + tileSize
-                val bottom = top + tileSize
-
-                tilePaint.color = Color.parseColor("#E15BB5")
-                canvas.drawRoundRect(
-                    RectF(left, top, right, bottom),
-                    30f,
-                    30f,
-                    tilePaint
-                )
-
                 val value = tiles[r][c]
+
                 if (value != 0) {
+
+                    val left = gridLeft + c * tileSize + laneSpacing
+                    val top = gridTop + r * tileSize
+                    val right = left + laneWidth
+                    val bottom = top + tileSize
+
+                    tilePaint.color = Color.parseColor("#E15BB5")
+
+                    canvas.drawRoundRect(
+                        RectF(left, top, right, bottom),
+                        30f,
+                        30f,
+                        tilePaint
+                    )
+
                     canvas.drawText(
                         value.toString(),
-                        left + tileSize / 2,
+                        left + laneWidth / 2,
                         top + tileSize / 2 + 15,
                         textPaint
                     )
@@ -105,10 +126,14 @@ class GameManager(
             }
         }
 
+        // ===== FALLING TILE =====
         if (fallingRow >= 0) {
 
-            val left = gridLeft + spawnColumn * tileSize
-            val right = left + tileSize
+            val laneSpacing = tileSize * 0.18f
+            val laneWidth = tileSize - laneSpacing * 2
+
+            val left = gridLeft + spawnColumn * tileSize + laneSpacing
+            val right = left + laneWidth
             val bottom = fallingY + tileSize
 
             tilePaint.color = Color.parseColor("#8E5BE8")
@@ -122,7 +147,7 @@ class GameManager(
 
             canvas.drawText(
                 fallingValue.toString(),
-                left + tileSize / 2,
+                left + laneWidth / 2,
                 fallingY + tileSize / 2 + 15,
                 textPaint
             )
@@ -138,12 +163,13 @@ class GameManager(
         if (fallingRow >= 0) return
 
         for (r in ROWS - 1 downTo 0) {
+
             if (tiles[r][spawnColumn] == 0) {
+
                 fallingRow = r
                 fallingY = gridTop - tileSize
 
-                // 🔥 USE FUTURE TILE VALUE HERE
-                fallingValue = consumeNextTile()
+                fallingValue = if (Random.nextBoolean()) 2 else 4
 
                 break
             }
@@ -151,14 +177,12 @@ class GameManager(
     }
 
     fun resetGame() {
+
         for (r in 0 until ROWS) {
             for (c in 0 until COLS) {
                 tiles[r][c] = 0
             }
         }
-
-        // Reset preview as well
-        nextTileValue = generateRandomTile()
     }
 
     fun useHammer() {

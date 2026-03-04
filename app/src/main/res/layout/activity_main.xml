@@ -20,19 +20,18 @@
 
         <FrameLayout
             android:id="@+id/btnPause"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
             android:background="@drawable/bg_button_tile"
             android:layout_marginEnd="12dp"
             android:clickable="true"
             android:focusable="true">
 
             <ImageView
-                android:layout_width="22dp"
-                android:layout_height="22dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:layout_gravity="center"
-                android:src="@drawable/ic_pause_button"
-                android:contentDescription="Pause"/>
+                android:src="@drawable/ic_pause_button"/>
         </FrameLayout>
 
         <LinearLayout
@@ -48,8 +47,7 @@
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:src="@drawable/ic_diamond"
-                android:contentDescription="Diamond"/>
+                android:src="@drawable/ic_diamond"/>
 
             <TextView
                 android:id="@+id/txtCurrency"
@@ -65,7 +63,7 @@
         <View
             android:layout_width="0dp"
             android:layout_height="1dp"
-            android:layout_weight="1" />
+            android:layout_weight="1"/>
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -80,8 +78,7 @@
             <ImageView
                 android:layout_width="18dp"
                 android:layout_height="18dp"
-                android:src="@drawable/ic_crown"
-                android:contentDescription="Best Score"/>
+                android:src="@drawable/ic_crown"/>
 
             <TextView
                 android:id="@+id/txtBestScore"
@@ -96,19 +93,18 @@
 
         <FrameLayout
             android:id="@+id/btnSettings"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
             android:background="@drawable/bg_button_tile"
             android:layout_marginStart="12dp"
             android:clickable="true"
             android:focusable="true">
 
             <ImageView
-                android:layout_width="22dp"
-                android:layout_height="22dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:layout_gravity="center"
-                android:src="@drawable/ic_settings"
-                android:contentDescription="Settings"/>
+                android:src="@drawable/ic_settings"/>
         </FrameLayout>
 
     </LinearLayout>
@@ -118,8 +114,10 @@
     <LinearLayout
         android:id="@+id/futurePreviewContainer"
         android:layout_width="match_parent"
-        android:layout_height="80dp"
+        android:layout_height="72dp"
         android:gravity="center"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="6dp"
         android:orientation="vertical">
 
         <TextView
@@ -141,7 +139,8 @@
         android:id="@+id/gameView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="1"
+        android:layout_marginTop="6dp"/>
 
     <!-- ================= BOTTOM TOOL BAR ================= -->
 
@@ -150,99 +149,100 @@
         android:layout_height="90dp"
         android:orientation="horizontal"
         android:gravity="center"
-        android:paddingBottom="8dp">
+        android:paddingBottom="10dp">
 
-        <!-- 1️⃣ Hammer (Hexagon) -->
+        <!-- HEX -->
         <FrameLayout
             android:id="@+id/btnHammer"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
+            android:layout_width="62dp"
+            android:layout_height="62dp"
             android:layout_marginHorizontal="6dp"
             android:background="@drawable/bg_reward_hexagon"
             android:clickable="true"
             android:focusable="true">
 
             <ImageView
-                android:layout_width="26dp"
-                android:layout_height="26dp"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
                 android:layout_gravity="center"
                 android:src="@drawable/ic_hammer"/>
         </FrameLayout>
 
-        <!-- 2️⃣ Swipe (Square) -->
+        <!-- SQUARE -->
         <FrameLayout
             android:id="@+id/btnSwipe"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
+            android:layout_width="62dp"
+            android:layout_height="62dp"
             android:layout_marginHorizontal="6dp"
             android:background="@drawable/bg_button_tile"
             android:clickable="true"
             android:focusable="true">
 
             <ImageView
-                android:layout_width="26dp"
-                android:layout_height="26dp"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
                 android:layout_gravity="center"
                 android:src="@drawable/ic_swipe_tiles"/>
         </FrameLayout>
 
-        <!-- 3️⃣ Combo (Hexagon) -->
+        <!-- HEX -->
         <FrameLayout
             android:id="@+id/btnCombo"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
+            android:layout_width="62dp"
+            android:layout_height="62dp"
             android:layout_marginHorizontal="6dp"
             android:background="@drawable/bg_reward_hexagon"
             android:clickable="true"
             android:focusable="true">
 
             <ImageView
-                android:layout_width="26dp"
-                android:layout_height="26dp"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
                 android:layout_gravity="center"
                 android:src="@drawable/ic_combo"/>
         </FrameLayout>
 
-        <!-- 4️⃣ Undo (Square) -->
+        <!-- SQUARE -->
         <FrameLayout
             android:id="@+id/btnReset"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
+            android:layout_width="62dp"
+            android:layout_height="62dp"
             android:layout_marginHorizontal="6dp"
             android:background="@drawable/bg_button_tile"
             android:clickable="true"
             android:focusable="true">
 
             <ImageView
-                android:layout_width="26dp"
-                android:layout_height="26dp"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
                 android:layout_gravity="center"
                 android:src="@drawable/ic_undo"/>
         </FrameLayout>
 
-        <!-- 5️⃣ Ad (Hexagon) -->
+        <!-- HEX -->
         <FrameLayout
             android:id="@+id/btnReward"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
+            android:layout_width="62dp"
+            android:layout_height="62dp"
             android:layout_marginHorizontal="6dp"
             android:background="@drawable/bg_reward_hexagon"
             android:clickable="true"
             android:focusable="true">
 
             <ImageView
-                android:layout_width="26dp"
-                android:layout_height="26dp"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
                 android:layout_gravity="center"
                 android:src="@drawable/ic_ad"/>
         </FrameLayout>
 
     </LinearLayout>
+
     <!-- ================= ADS SPACE ================= -->
 
     <FrameLayout
         android:id="@+id/adContainer"
         android:layout_width="match_parent"
-        android:layout_height="60dp" />
+        android:layout_height="60dp"/>
 
 </LinearLayout>

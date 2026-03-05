@@ -1,1 +1,9 @@
 /build
+*.zip
+*.rar
+*.apk
+*.aab
+build/
+.gradle/
+.idea/
+local.properties

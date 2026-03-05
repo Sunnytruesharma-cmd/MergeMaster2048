@@ -1,8 +1,16 @@
 # MergeMaster2048
 
-MergeMaster2048 is an Android puzzle game inspired by the classic 2048 gameplay.
+![Android](https://img.shields.io/badge/platform-Android-green)
+![Kotlin](https://img.shields.io/badge/language-Kotlin-purple)
+![License](https://img.shields.io/badge/license-MIT-blue)
+Modern Android puzzle game inspired by classic 2048 gameplay.
+
+## Download Game
+
+[Download APK](../../releases/latest)
 
 ## Features
+
 - Smooth tile merging
 - Custom game engine
 - Power tools (Hammer, Shuffle)
